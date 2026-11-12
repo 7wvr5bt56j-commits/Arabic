@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="de"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Arabic">
+<meta name="theme-color" content="#F2F3F8">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>Arabic</title>
+<style>
+:root{--bg:#F2F3F8;--card:#FFFFFF;--sunk:#E7E9F2;--ink:#1A1C2B;--muted:#6A6E85;--line:#DADDEA;--accent:#4148E0;--accent2:#5B8CFF;--soft:#E3E6FF;--on:#FFFFFF;--ok:#1E9E62;--okbg:#DDF5E8;--bad:#D9473A;--badbg:#FBE2DF;--gold:#E3A008}
+@media (prefers-color-scheme:dark){:root{--bg:#0E0F17;--card:#1A1C28;--sunk:#252838;--ink:#ECEDF5;--muted:#9A9DB4;--line:#30344A;--accent:#7C8CFF;--accent2:#5B8CFF;--soft:#262B52;--on:#0E0F17;--ok:#44CC88;--okbg:#173A29;--bad:#F07468;--badbg:#45211E;--gold:#F5C04A;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,system-ui,"Segoe UI",sans-serif;-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}
+button{border:0;cursor:pointer;background:none}
+.app{max-width:520px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;min-height:100vh}
+.bar{display:flex;align-items:center;gap:10px;min-height:40px}
+.bar h2{margin:0;font-size:17px;flex:1;text-align:center}
+.back{color:var(--accent);font-size:17px;padding:6px 0;min-width:70px;text-align:left}
+.spacer{min-width:70px;text-align:right;color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+h1{margin:4px 0 0;font-size:30px;letter-spacing:-.01em}
+.small{font-size:14px;color:var(--muted)}
+.box{background:var(--card);border-radius:18px;padding:16px}
+.prog{height:8px;border-radius:4px;background:var(--sunk);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--card);border-radius:18px;padding:16px 14px;text-align:left;display:flex;flex-direction:column;gap:6px;min-height:96px}
+.tile .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:18px;color:#fff}
+.tile b{font-size:16px}
+.tile span{font-size:13px;color:var(--muted)}
+.lbl{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:6px 2px -4px}
+.seg{display:flex;background:var(--sunk);border-radius:10px;padding:3px;gap:3px}
+.seg button{flex:1;padding:8px 4px;border-radius:8px;font-size:14px}
+.seg button.on{background:var(--card);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.row{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .t{flex:1;min-width:0}
+.row .t b{color:var(--accent);display:block}
+.star{font-size:22px;color:var(--line);padding:4px 6px;line-height:1}
+.star.on{color:var(--gold)}
+.btn{border-radius:14px;padding:15px;font-weight:700;width:100%;font-size:17px;background:var(--sunk)}
+.btn.main{background:var(--accent);color:var(--on)}
+.btn.okb{background:var(--okbg);color:var(--ok)} .btn.badb{background:var(--badbg);color:var(--bad)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sw{width:50px;height:30px;border-radius:15px;background:var(--sunk);position:relative;flex:none;transition:background .2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s}
+.sw.on{background:var(--ok)} .sw.on::after{left:23px}
+
+/* Karteikarte */
+.flash{perspective:1200px;height:340px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.flash .in{position:relative;width:100%;height:100%;transition:transform .45s;transform-style:preserve-3d}
+.flash.fl .in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;background:var(--card);border-radius:22px;box-shadow:0 6px 20px rgba(20,24,60,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.face.b{transform:rotateY(180deg)}
+.face .star{position:absolute;top:10px;right:10px}
+.face .hint{position:absolute;bottom:14px;font-size:13px;color:var(--muted)}
+.big{font-size:30px;font-weight:700;white-space:pre-line;line-height:1.25}
+.big.num{font-size:64px}
+.ar{color:var(--accent)}
+.laut{font-size:16px;color:var(--muted)}
+.laut::before{content:"sprich ";font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.note{font-size:14px;background:var(--sunk);border-radius:10px;padding:8px 12px;max-width:34ch;text-align:left}
+.note b{display:block;color:var(--gold);font-size:12px}
+.cnt{display:flex;justify-content:space-between;font-size:14px;font-weight:700}
+.cnt .l{color:var(--bad)} .cnt .r{color:var(--ok)}
+
+/* Fragen */
+.q{background:var(--card);border-radius:22px;padding:22px 18px;display:flex;flex-direction:column;gap:14px;min-height:150px;justify-content:center}
+.q .ask{font-size:13px;color:var(--muted)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:14px;text-align:left;font-size:17px;white-space:pre-line}
+.opt.ok{border-color:var(--ok);background:var(--okbg)}
+.opt.bad{border-color:var(--bad);background:var(--badbg)}
+.opt:disabled{cursor:default}
+.inp{width:100%;border:2px solid var(--line);background:var(--card);border-radius:14px;padding:14px;font-size:18px;outline:none}
+.inp:focus{border-color:var(--accent)}
+.fb{border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.fb.ok{background:var(--okbg)} .fb.bad{background:var(--badbg)}
+.fb .h{font-weight:700} .fb.ok .h{color:var(--ok)} .fb.bad .h{color:var(--bad)}
+.link{color:var(--accent);font-size:15px;padding:6px 0}
+
+/* Spiele */
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mt{background:var(--card);border-radius:14px;min-height:88px;padding:8px;font-size:15px;font-weight:600;display:grid;place-items:center;text-align:center;transition:opacity .25s,transform .25s,background .15s;word-break:break-word}
+.mt.sel{background:var(--soft);outline:2px solid var(--accent)}
+.mt.gone{opacity:0;transform:scale(.8);pointer-events:none}
+.mt.err{background:var(--badbg);animation:shake .3s}
+.mt.hid{background:linear-gradient(160deg,var(--accent2),var(--accent));color:transparent}
+.mt.hid::after{content:"؟";color:rgba(255,255,255,.85);font-size:26px}
+.mt.match{background:var(--okbg)}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.timer{font-size:28px;font-weight:700;text-align:center;font-variant-numeric:tabular-nums}
+.res{text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center;padding:28px 16px}
+.res .em{font-size:52px;line-height:1}
+.res h2{margin:0;font-size:26px}
+.say{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:var(--soft);color:var(--accent);font-size:20px;flex:none}
+.arab{font-size:24px;direction:rtl;font-family:"Geeza Pro","Noto Naskh Arabic","Arial",sans-serif}
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:20px;font-size:14px;z-index:9}
+</style>
+</head><body>
+<div class="app" id="app"></div>
+<script>
+/* Wörter aus der Kursliste Dialect Arabic.
+   de = Deutsch, dar = Arabic, laut = Lautschrift, n = Hinweis, o = deine Notiz (wenn korrigiert), g = Grammatikkarte (nicht in Spielen) */
+const WORDS = [{"id":1,"de":"ich","dar":"ana","laut":"A-na","ar":"أنا"},{"id":2,"de":"ich heiße …","dar":"ana ismi …","laut":"A-na IS-mi","n":"Im Alltag sagt man oft smiti …","ar":"أنا اسمي"},{"id":3,"de":"Wie heißt du? (m / f)","dar":"achnou ismak? / achnou ismek?","laut":"ASCH-nu IS-mak / IS-mek","n":"So steht es auf dem Kursblatt. Im Alltag hört man auch smitek.","o":"aschnu ismi","ar":"أشنو اسمك؟"},{"id":4,"de":"ich komme aus …","dar":"ana min …","laut":"A-na men","ar":"أنا من"},{"id":5,"de":"und","dar":"wa","laut":"u / wa","n":"Meist nur ein kurzes u vor dem Wort.","ar":"و"},{"id":6,"de":"sehr gut","dar":"mumtez","laut":"mum-TAZ","ar":"ممتاز"},{"id":7,"de":"Student","dar":"talib","laut":"TA-leb","ar":"طالب"},{"id":8,"de":"Studentin","dar":"taliba","laut":"TA-le-ba","ar":"طالبة"},{"id":9,"de":"ich bin in … (Ort)","dar":"ana f …","laut":"A-na f","n":"fin heißt „wo“. Ich bin in Casa = ana f Casa.","o":"ana fin","ar":"أنا ف"},{"id":10,"de":"nein","dar":"la","laut":"LA","ar":"لا"},{"id":11,"de":"ja","dar":"iyeh / ah","laut":"I-jeh / AH","o":"ja","ar":"إيه / آه"},{"id":12,"de":"und du? (m / f)","dar":"w enta? / w enti?","laut":"u-NTA / u-NTI","n":"enta allein heißt nur „du“.","o":"enta","ar":"ونتا؟ / ونتي؟"},{"id":13,"de":"wo ist …?","dar":"fayn …?","laut":"FEJN","ar":"فين؟"},{"id":14,"de":"du (m / f)","dar":"inta / inti","laut":"NTA / NTI","ar":"انتا / انتي"},{"id":15,"de":"er","dar":"howa","laut":"HO-wa","ar":"هو"},{"id":16,"de":"sie","dar":"hiya","laut":"HI-ja","ar":"هي"},{"id":17,"de":"hallo / alles gut","dar":"labas","laut":"la-BAS","n":"Als Frage: Wie geht's?","ar":"لاباس"},{"id":18,"de":"Brot","dar":"chohbs","laut":"CHOBZ","ar":"خبز"},{"id":19,"de":"Wie viel?","dar":"bitschal","laut":"b-SCHḤAL","ar":"بشحال؟"},{"id":20,"de":"Was ist das? (m / f)","dar":"achnou hada? / achnou hadi?","laut":"ASCH-nu HA-da / HA-di","ar":"أشنو هادا؟ / أشنو هادي؟"},{"id":21,"de":"Milch","dar":"hlib","laut":"ḤLIB","n":"Am Anfang das kräftige Hauch-h, kein ch.","o":"chalib","ar":"حليب"},{"id":22,"de":"Wasser","dar":"ma","laut":"l-MA","n":"Meist mit l davor: lma.","ar":"الما"},{"id":23,"de":"ich weiß es nicht","dar":"maraf","laut":"ma-ʿRAF","n":"Vollständig: ma3reftch.","ar":"ما عرفتش"},{"id":24,"de":"das ist … (m / f)","dar":"hada / hadi","laut":"HA-da / HA-di","ar":"هادا / هادي"},{"id":25,"de":"Tisch","dar":"tabla","laut":"TAB-la","ar":"طابلة"},{"id":26,"de":"Tasche","dar":"sac","laut":"SAK","ar":"صاك"},{"id":27,"de":"viel","dar":"bzaf","laut":"b-ZAF","o":"bsaft","ar":"بزاف"},{"id":28,"de":"weibliche Form","dar":"Endung -a","n":"talib → taliba","g":1},{"id":29,"de":"ich trinke","dar":"nashrab","laut":"NESCH-rab","o":"nashram","ar":"نشرب"},{"id":30,"de":"ich laufe / gehe","dar":"namshi","laut":"NEM-schi","ar":"نمشي"},{"id":31,"de":"ich esse","dar":"nakul","laut":"NA-kul","ar":"ناكل"},{"id":32,"de":"ich sehe","dar":"nashuf","laut":"na-SCHUF","ar":"نشوف"},{"id":33,"de":"ich schreibe","dar":"naktab","laut":"NEK-teb","ar":"نكتب"},{"id":34,"de":"Verben: Vorsilbe je Person","dar":"ana (na)\ninta (ta)\ninti (ta)\nhowa (ya)\nhaya (ta)","g":1},{"id":35,"de":"Stuhl","dar":"korsi","laut":"KUR-si","o":"kusi","ar":"كرسي"},{"id":36,"de":"Papier","dar":"warka","laut":"WAR-qa","ar":"ورقة"},{"id":37,"de":"wer? / was?","dar":"shkun / ashnu","laut":"SCH-KUN / ASCH-nu","ar":"شكون / أشنو"},{"id":38,"de":"auf","dar":"ala","laut":"ʿLA","ar":"على"},{"id":39,"de":"in","dar":"fi","laut":"FI","n":"fin heißt „wo“.","o":"fin","ar":"في"},{"id":40,"de":"Stift","dar":"stilo","laut":"sti-LO","ar":"ستيلو"},{"id":41,"de":"unter","dar":"taht","laut":"TAḤT","ar":"تحت"},{"id":42,"de":"Rucksack","dar":"sac","laut":"SAK","ar":"صاك"},{"id":43,"de":"0","dar":"zefir","laut":"SI-fer","n":"Üblich auch sifr oder zero.","ar":"صفر"},{"id":44,"de":"1","dar":"wahed","laut":"WA-ḥed","ar":"واحد"},{"id":45,"de":"2","dar":"jouj","laut":"DSCHUDSCH","n":"Das j klingt oft weich wie in Journal.","ar":"جوج"},{"id":46,"de":"3","dar":"tlata","laut":"TLA-ta","ar":"تلاتة"},{"id":47,"de":"4","dar":"arbaa","laut":"ARBʿ-a","o":"achbaha","ar":"ربعة"},{"id":48,"de":"5","dar":"khamsa","laut":"CHAM-sa","ar":"خمسة"},{"id":49,"de":"6","dar":"sitta","laut":"SET-ta","ar":"ستة"},{"id":50,"de":"7","dar":"sebaa","laut":"SEBʿ-a","ar":"سبعة"},{"id":51,"de":"8","dar":"tmania","laut":"TMEN-ja","ar":"تمنية"},{"id":52,"de":"9","dar":"tsaoud","laut":"TSA-ʿud","o":"tzut","ar":"تسعود"},{"id":53,"de":"10","dar":"aashra","laut":"ʿASCH-ra","ar":"عشرة"},{"id":54,"de":"11","dar":"hdash","laut":"ḥ-DASCH","ar":"حداش"},{"id":55,"de":"12","dar":"tnash","laut":"TNASCH","ar":"طناش"},{"id":56,"de":"13","dar":"tellash","laut":"tel-LASCH","o":"kletasch","ar":"تلطاش"},{"id":57,"de":"14","dar":"rbaatash","laut":"rbaʿ-TAʿSCH","ar":"ربعطاش"},{"id":58,"de":"15","dar":"hamsdasch","laut":"chmas-TAʿSCH","ar":"خمسطاش"},{"id":59,"de":"16","dar":"stasch","laut":"s-TAʿSCH","ar":"سطاش"},{"id":60,"de":"17","dar":"sabatasch","laut":"sbaʿ-TAʿSCH","ar":"سبعطاش"},{"id":61,"de":"18","dar":"tmentasch","laut":"tmen-TAʿSCH","ar":"تمنطاش"},{"id":62,"de":"19","dar":"tsutasch","laut":"tsaʿ-TAʿSCH","ar":"تسعطاش"},{"id":63,"de":"20","dar":"achrine","laut":"ʿASCH-rin","o":"ashrem","ar":"عشرين"},{"id":64,"de":"30","dar":"tlatine","laut":"tla-TIN","ar":"تلاتين"},{"id":65,"de":"Tür","dar":"beb","laut":"BEB","ar":"باب"},{"id":66,"de":"Bekannter / Freund / Nachbar","dar":"krip","laut":"QRIB","n":"qrib heißt wörtlich „nah“, auch für Verwandte. Freund = sa7bi, Nachbar = jar.","ar":"قريب"},{"id":67,"de":"du heißt … (m / f)","dar":"inta ismak … / inti ismek …","laut":"IN-ta IS-mak / IN-ti IS-mek","ar":"انتا اسمك / انتي اسمك"},{"id":68,"de":"er heißt …","dar":"howa ismou …","laut":"HO-wa IS-mu","ar":"هو اسمو"},{"id":69,"de":"sie heißt …","dar":"hiya ismha …","laut":"HI-ja IS-mha","ar":"هي اسمها"},{"id":70,"de":"Wie heißt er?","dar":"achnou ismou?","laut":"ASCH-nu IS-mu","ar":"أشنو اسمو؟"},{"id":71,"de":"Wer bist du?","dar":"shkun inta?","laut":"SCH-KUN IN-ta","ar":"شكون انتا؟"},{"id":72,"de":"Bist du John?","dar":"wash inta John?","laut":"WASCH IN-ta","ar":"واش انتا جون؟","n":"wash leitet Ja/Nein-Fragen ein."},{"id":73,"de":"Wo ist das Brot?","dar":"fayn khobz?","laut":"FEJN CHOBZ","ar":"فين الخبز؟"},{"id":74,"de":"Das Brot ist auf dem Tisch.","dar":"khobz ala tabla","laut":"CHOBZ ʿLA TAB-la","ar":"الخبز على الطابلة"},{"id":75,"de":"Die Garage ist unter der ESCA.","dar":"garage taht ESCA","laut":"ga-RASCH TAḤT ES-ka","ar":"الكاراج تحت إسكا"},{"id":76,"de":"Auto","dar":"tomobila","laut":"to-mo-BI-la","ar":"طوموبيلة","n":"Weiblich, Endung -a."},{"id":77,"de":"Orange","dar":"limouna","laut":"li-MU-na","ar":"ليمونة","n":"Weiblich, Endung -a."},{"id":78,"de":"Pizza","dar":"pizza","laut":"PIZ-za","ar":"بيتزا","n":"Weiblich, Endung -a."},{"id":79,"de":"Kaffee","dar":"kahwa","laut":"QAH-wa","ar":"قهوة","n":"Weiblich, Endung -a."},{"id":80,"de":"Altstadt","dar":"medina","laut":"me-DI-na","ar":"مدينة","n":"Weiblich, Endung -a."},{"id":81,"de":"Süßigkeit / Gebäck","dar":"halwa","laut":"ḤAL-wa","ar":"حلوة","n":"Weiblich, Endung -a."},{"id":82,"de":"Ball / Fußball","dar":"kora","laut":"KO-ra","ar":"كورة","n":"Weiblich, Endung -a."},{"id":83,"de":"Harira (Suppe)","dar":"harira","laut":"ḥa-RI-ra","ar":"حريرة","n":"Weiblich, Endung -a."},{"id":84,"de":"Tomate","dar":"matisha","laut":"ma-TI-scha","ar":"ماطيشة","n":"Weiblich, Endung -a."},{"id":85,"de":"Banane","dar":"banana","laut":"ba-NA-na","ar":"بنانة","n":"Weiblich, Endung -a."},{"id":86,"de":"ich kaufe","dar":"nachri","laut":"NESCH-ri","ar":"نشري"},{"id":87,"de":"ich wähle","dar":"nakhtar","laut":"nech-TAR","ar":"نختار"},{"id":88,"de":"ich will / ich mag","dar":"nebghi","laut":"NEB-ghi","ar":"نبغي","n":"gh wie ein Rachen-r."},{"id":89,"de":"sehen in allen Personen","dar":"ana nashuf\ninta tashuf\ninti tashufi\nhowa yashuf\nhiya tashuf","g":1},{"id":90,"de":"er sieht","dar":"howa yashuf","laut":"HO-wa ja-SCHUF","ar":"هو يشوف"},{"id":91,"de":"du siehst (f)","dar":"inti tashufi","laut":"IN-ti ta-SCHU-fi","ar":"انتي تشوفي","n":"Bei inti kommt hinten ein -i dazu."},{"id":92,"de":"ich esse nicht","dar":"ana manakulsh","laut":"A-na ma-na-KULSCH","ar":"أنا ما ناكلش"},{"id":93,"de":"Verneinung","dar":"ma … sh","n":"Das Verb kommt zwischen ma und sh: nakul → manakulsh.","g":1},{"id":94,"de":"21","dar":"wahed ou achrine","laut":"WA-ḥed u ʿASCH-rin","ar":"واحد و عشرين","n":"Erst die Einer, dann ou, dann die Zehner."},{"id":95,"de":"22","dar":"tnine ou achrine","laut":"TNIN u ʿASCH-rin","ar":"تنين و عشرين"},{"id":96,"de":"40","dar":"arbaine","laut":"ar-baʿ-IN","ar":"ربعين"},{"id":97,"de":"50","dar":"khamsine","laut":"cham-SIN","ar":"خمسين"},{"id":98,"de":"Was ist heute für ein Tag?","dar":"achnou lyoum?","laut":"ASCH-nu l-JUM","ar":"أشنو اليوم؟","c":"zeit"},{"id":99,"de":"Heute ist Donnerstag.","dar":"lyoum lakhmiss","laut":"l-JUM l-CHMIS","ar":"اليوم الخميس","c":"zeit"},{"id":100,"de":"Sonntag","dar":"lhad","laut":"l-ḤAD","ar":"الحد","c":"zeit"},{"id":101,"de":"Montag","dar":"letnine","laut":"let-NIN","ar":"الاثنين","c":"zeit"},{"id":102,"de":"Dienstag","dar":"tlat","laut":"TLAT","ar":"الثلاث","c":"zeit"},{"id":103,"de":"Mittwoch","dar":"larbaa","laut":"l-ARBʿ","ar":"الأربع","c":"zeit"},{"id":104,"de":"Donnerstag","dar":"lakhmiss","laut":"l-CHMIS","ar":"الخميس","c":"zeit"},{"id":105,"de":"Freitag","dar":"jjoumaa","laut":"DSCH-DSCHUM-ʿa","ar":"الجمعة","c":"zeit"},{"id":106,"de":"Samstag","dar":"sebt","laut":"SEBT","ar":"السبت","c":"zeit"},{"id":107,"de":"Wie spät ist es?","dar":"shhal fi saa?","laut":"SCHḤAL f s-SAʿ","ar":"شحال فالساعة؟","c":"zeit"},{"id":108,"de":"genau (volle Stunde)","dar":"nishane","laut":"ni-SCHAN","ar":"نيشان","c":"zeit"},{"id":109,"de":"und fünf (Minuten)","dar":"ou khamsa","laut":"u CHAM-sa","ar":"و خمسة","c":"zeit"},{"id":110,"de":"und halb","dar":"ou nass","laut":"u NUSS","ar":"و نص","c":"zeit"},{"id":111,"de":"und Viertel","dar":"ou rbaa","laut":"u REBʿ","ar":"و ربع","c":"zeit"},{"id":112,"de":"plus (bei der Uhrzeit)","dar":"ou","laut":"u","ar":"و","c":"zeit"},{"id":113,"de":"weniger / vor (bei der Uhrzeit)","dar":"kal","laut":"QELL","ar":"قل","n":"Für Minuten vor der vollen Stunde.","c":"zeit"},{"id":114,"de":"3:05","dar":"tlata ou khamsa","laut":"TLA-ta u CHAM-sa","ar":"تلاتة و خمسة","c":"zeit"},{"id":115,"de":"5:30","dar":"khamsa ou nass","laut":"CHAM-sa u NUSS","ar":"خمسة و نص","c":"zeit"},{"id":116,"de":"6:50","dar":"sebaa kal aashra","laut":"SEBʿ-a QELL ʿASCH-ra","ar":"سبعة قل عشرة","n":"Wörtlich: sieben weniger zehn.","c":"zeit"}];
+
+/* ---------- Speicher ---------- */
+// Alles wird sofort nach jeder Antwort gespeichert, auch die laufende Runde (S.sess).
+// Schließt du die App, geht es beim nächsten Öffnen genau dort weiter.
+const KEY = "arabic-kurs-v2";
+let S = {};
+try { S = JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){}
+S = Object.assign({star:{}, lv:{}, best:{}, front:"de", cat:"all", shuf:false, sess:null}, S);
+if (S.onlyStar){ S.cat = "star"; delete S.onlyStar; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} };
+window.addEventListener("pagehide", save);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") save(); });
+
+/* ---------- Helfer ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; };
+const isNum = w => /^\d+$/.test(w.de);
+const BYID = {}; WORDS.forEach(w => BYID[w.id] = w);
+const byIds = ids => ids.map(id => BYID[id]).filter(Boolean);
+const CATS = [["all","Alle"],["words","Wörter"],["nums","Zahlen"],["zeit","Zeit"],["star","★"]];
+const inCat = w => S.cat === "words" ? !isNum(w) && w.c !== "zeit" : S.cat === "nums" ? isNum(w) : S.cat === "zeit" ? w.c === "zeit" : S.cat === "star" ? !!S.star[w.id] : true;
+const pool = () => { const p = WORDS.filter(inCat); return p.length ? p : WORDS; };
+const gamePool = () => { const p = pool().filter(w => !w.g); return p.length >= 6 ? p : WORDS.filter(w => !w.g); };
+const catName = () => S.cat === "star" ? "Markiert" : CATS.find(c => c[0] === S.cat)[1];
+const dir = () => S.front === "mix" ? (Math.random() < .5 ? "de" : "dar") : S.front;
+const promptOf = (w, d) => d === "de" ? w.de : w.dar;
+const answerOf = (w, d) => d === "de" ? w.dar : w.de;
+function toast(t){ const el = document.createElement("div"); el.className = "toast"; el.textContent = t; document.body.appendChild(el); setTimeout(() => el.remove(), 1800); }
+function fmtTime(ms){ return (ms/1000).toFixed(1).replace(".", ",") + " s"; }
+function norm(s){ return String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\(.*?\)/g,"").replace(/[…?!.,'"„“-]/g,"").replace(/\s+/g," ").trim(); }
+
+// falsche Antworten für Multiple Choice: gleiche Art (Zahl oder Wort)
+function distractors(w, d, k){
+  const same = WORDS.filter(x => x.id !== w.id && !x.g && isNum(x) === isNum(w) && answerOf(x,d) !== answerOf(w,d));
+  const other = WORDS.filter(x => x.id !== w.id && !x.g && !same.includes(x));
+  return shuffle(same).concat(shuffle(other)).slice(0, k);
+}
+function answerBlock(w){
+  return `<div style="display:flex;align-items:center;gap:12px"><div style="flex:1"><div class="big ar" style="font-size:24px">${esc(w.dar)}</div>${w.ar ? `<div class="arab">${esc(w.ar)}</div>` : ""}</div>${sayBtn(w)}</div>${w.laut ? `<div class="laut">${esc(w.laut)}</div>` : ""}<div>${esc(w.de)}</div>${note(w)}`;
+}
+function note(w){ return (w.o || w.n) ? `<div class="note">${w.o ? `<b>Deine Notiz: ${esc(w.o)}</b>` : ""}${esc(w.n || "")}</div>` : ""; }
+function bar(title, right){
+  return `<div class="bar"><button class="back" id="back">‹ Zurück</button><h2>${esc(title)}</h2><div class="spacer" id="right">${right || ""}</div></div>`;
+}
+let timers = [];
+function clearTimers(){ timers.forEach(t => clearInterval(t)); timers = []; }
+function go(fn){ clearTimers(); window.scrollTo(0,0); fn(); }
+function wireBack(){ const b = $("back"); if (b) b.onclick = () => go(home); }
+/* ---------- Aussprache: arabische Stimme des Geräts liest die arabische Schrift vor ---------- */
+let VOICE = null;
+function pickVoice(){
+  const vs = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+  VOICE = vs.find(v => /^ar[-_]MA/i.test(v.lang)) || vs.find(v => /^ar/i.test(v.lang)) || null;
+}
+if (window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function say(id){
+  const w = BYID[id]; if (!w || !w.ar) return;
+  if (!window.speechSynthesis){ toast("Vorlesen wird hier nicht unterstützt"); return; }
+  if (!VOICE) pickVoice();
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(w.ar.replace(/\//g, "، "));
+  u.lang = VOICE ? VOICE.lang : "ar-SA"; if (VOICE) u.voice = VOICE; u.rate = .8;
+  if (!VOICE) toast("Keine arabische Stimme gefunden. iPhone: Einstellungen › Bedienungshilfen › Gesprochene Inhalte › Stimmen › Arabisch");
+  speechSynthesis.speak(u);
+}
+const sayBtn = w => w.ar ? `<button class="say" data-say="${w.id}" aria-label="Vorlesen">🔊</button>` : "";
+document.addEventListener("click", e => { const b = e.target.closest("[data-say]"); if (b){ e.stopPropagation(); e.preventDefault(); say(+b.dataset.say); } }, true);
+
+function setSess(x){ S.sess = x; save(); }
+function endSess(){ S.sess = null; save(); }
+
+/* ---------- Start ---------- */
+function home(){
+  const list = pool(), total = list.length, mastered = list.filter(w => S.lv[w.id] === 2).length, stars = Object.keys(S.star).length;
+  const tile = (id, ic, col, name, sub) => `<button class="tile" id="${id}"><div class="ic" style="background:${col}">${ic}</div><b>${name}</b><span>${sub}</span></button>`;
+  const ss = S.sess, names = {fc:"Karteikarten", learn:"Lernen", test:"Test"};
+  const resume = ss ? `<button class="box" id="resume" style="display:flex;align-items:center;gap:12px;text-align:left;border:2px solid var(--accent)"><span style="font-size:24px">▶</span><span style="flex:1"><b>Weitermachen: ${names[ss.m]}</b><br><span class="small">${ss.catName || ""} · ${ss.m === "learn" ? "Runde läuft" : (ss.i + 1) + " von " + (ss.ids || ss.qs).length}</span></span></button>` : "";
+  $("app").innerHTML = `
+    <div><h1>Arabic</h1><div class="small">${catName()}: ${total} Begriffe · ${mastered} beherrscht</div></div>
+    <div class="prog"><i style="width:${mastered/total*100}%"></i></div>
+    ${resume}
+    <div class="seg">${CATS.map(([k,n]) => `<button data-c="${k}" class="${S.cat===k?"on":""}">${n}</button>`).join("")}</div>
+    <div class="lbl">Lernen</div>
+    <div class="grid">
+      ${tile("m-fc","▤","#4148E0","Karteikarten","Umdrehen und sortieren")}
+      ${tile("m-learn","✦","#7B4FE0","Lernen","Erkennen, dann sprechen")}
+      ${tile("m-test","✓","#1E9E62","Test","12 gemischte Fragen")}
+      ${tile("g-match","⇄","#E8590C","Zuordnen", S.best.match ? "Bestzeit " + fmtTime(S.best.match) : "Paare gegen die Zeit")}
+      ${tile("g-blitz","⚡","#D6336C","Blitzrunde", S.best.blitz ? "Rekord " + S.best.blitz + " Punkte" : "60 s richtig oder falsch")}
+      ${tile("g-mem","◫","#3B5BDB","Memory", S.best.mem ? "Rekord " + S.best.mem + " Züge" : "Paare aufdecken")}
+    </div>
+    <div class="lbl">Abfragerichtung</div>
+    <div class="seg">${[["de","Deutsch → Arabic"],["dar","Arabic → Deutsch"],["mix","Gemischt"]].map(([k,n]) => `<button data-f="${k}" class="${S.front===k?"on":""}">${n}</button>`).join("")}</div>
+    <div class="lbl">Begriffe (${total})</div>
+    <div class="box" style="padding-top:4px;padding-bottom:4px">${list.map(w => `<div class="row"><div class="t">${esc(w.de)}<b>${esc(w.dar).replace(/\n/g," · ")}</b>${w.laut ? `<span class="small">${esc(w.laut)}</span>` : ""}${w.o ? `<div class="small">Deine Notiz: ${esc(w.o)}</div>` : ""}</div>${sayBtn(w)}<button class="star ${S.star[w.id]?"on":""}" data-s="${w.id}" aria-label="Markieren">★</button></div>`).join("")}</div>
+    <button class="link" id="reset" style="color:var(--bad)">Lernfortschritt zurücksetzen</button>`;
+  if ($("resume")) $("resume").onclick = () => go(resumeSess);
+  $("m-fc").onclick = () => go(() => S.sess && S.sess.m === "fc" ? resumeSess() : flashStart());
+  $("m-learn").onclick = () => go(() => S.sess && S.sess.m === "learn" ? resumeSess() : learnStart());
+  $("m-test").onclick = () => go(() => S.sess && S.sess.m === "test" ? resumeSess() : testStart());
+  $("g-match").onclick = () => go(matchStart);
+  $("g-blitz").onclick = () => go(blitzStart);
+  $("g-mem").onclick = () => go(memStart);
+  document.querySelectorAll("[data-c]").forEach(b => b.onclick = () => {
+    if (b.dataset.c === "star" && !stars){ toast("Markiere zuerst Begriffe mit ★"); return; }
+    if (S.cat !== b.dataset.c){ S.cat = b.dataset.c; S.sess = null; save(); }
+    home();
+  });
+  document.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { S.front = b.dataset.f; save(); home(); });
+  document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => { const id = b.dataset.s; if (S.star[id]) delete S.star[id]; else S.star[id] = true; save(); b.classList.toggle("on"); });
+  $("reset").onclick = () => { if (confirm("Lernfortschritt und Rekorde löschen? Markierungen bleiben.")){ S.lv = {}; S.best = {}; S.sess = null; save(); home(); } };
+}
+function resumeSess(){
+  const s = S.sess; if (!s) return home();
+  if (s.m === "fc"){ F = {list: byIds(s.ids), i: s.i, know: byIds(s.know), learn: byIds(s.learn), hist: s.hist, flipped:false}; return flash(); }
+  if (s.m === "learn"){ L = {list: pool(), round: byIds(s.round), i: s.i, right: s.right}; return learnQ(); }
+  if (s.m === "test"){ T = {qs: s.qs.map(q => ({w: BYID[q.id], type: q.type, d: q.d})).filter(q => q.w), i: s.i, right: s.right, wrong: byIds(s.wrong)}; return testQ(); }
+  home();
+}
+
+/* ---------- Karteikarten ---------- */
+let F;
+function flashSave(){ setSess({m:"fc", catName: catName(), ids: F.list.map(w => w.id), i: F.i, know: F.know.map(w => w.id), learn: F.learn.map(w => w.id), hist: F.hist}); }
+function flashStart(cards){
+  const list = cards || (S.shuf ? shuffle(pool()) : pool());
+  F = {list, i:0, know:[], learn:[], flipped:false, hist:[]};
+  flashSave(); flash();
+}
+function flash(){
+  if (F.i >= F.list.length) return flashEnd();
+  const w = F.list[F.i], d = F.d || (F.d = dir());
+  const arSide = `<div class="big ar">${esc(w.dar)}</div>${w.ar ? `<div class="arab">${esc(w.ar)}</div>` : ""}${w.laut ? `<div class="laut">${esc(w.laut)}</div>` : ""}${sayBtn(w)}`;
+  const front = d === "de" ? `<div class="big${isNum(w)?" num":""}">${esc(w.de)}</div>` : arSide;
+  const back = d === "de" ? arSide + note(w) : `<div class="big${isNum(w)?" num":""}">${esc(w.de)}</div>${note(w)}`;
+  const st = `<button class="star ${S.star[w.id]?"on":""}" data-st>★</button>`;
+  $("app").innerHTML = `${bar("Karteikarten", (F.i+1) + " / " + F.list.length)}
+    <div class="prog"><i style="width:${F.i/F.list.length*100}%"></i></div>
+    <div class="cnt"><span class="l">${F.learn.length} noch lernen</span><span class="r">${F.know.length} gewusst</span></div>
+    <div class="flash${F.flipped?" fl":""}" id="card"><div class="in"><div class="face">${st}${front}<div class="hint">Laut sagen, dann tippen zum Umdrehen</div></div><div class="face b">${st}${back}</div></div></div>
+    <div class="two"><button class="btn badb" id="no">✗ Noch lernen</button><button class="btn okb" id="yes">✓ Gewusst</button></div>
+    <div style="display:flex;justify-content:space-between"><button class="link" id="undo" ${F.hist.length?"":"disabled style='opacity:.4'"}>↶ Zurück</button><button class="link" id="shuf">${S.shuf ? "Gemischt ✓" : "Mischen"}</button><button class="link" id="new">Neu starten</button></div>`;
+  wireBack();
+  $("card").onclick = e => { if (e.target.closest("[data-st]")) return; F.flipped = !F.flipped; $("card").classList.toggle("fl"); };
+  document.querySelectorAll("[data-st]").forEach(b => b.onclick = e => { e.stopPropagation(); if (S.star[w.id]) delete S.star[w.id]; else S.star[w.id] = true; save(); document.querySelectorAll("[data-st]").forEach(x => x.classList.toggle("on", !!S.star[w.id])); });
+  const mark = ok => { F.hist.push(ok); (ok ? F.know : F.learn).push(w); F.i++; F.flipped = false; F.d = null; flashSave(); flash(); };
+  $("yes").onclick = () => mark(true);
+  $("no").onclick = () => mark(false);
+  $("undo").onclick = () => { if (!F.hist.length) return; const ok = F.hist.pop(); (ok ? F.know : F.learn).pop(); F.i--; F.flipped = false; F.d = null; flashSave(); flash(); };
+  $("shuf").onclick = () => { S.shuf = !S.shuf; save(); flashStart(); };
+  $("new").onclick = () => flashStart();
+}
+function flashEnd(){
+  endSess();
+  const l = F.learn;
+  $("app").innerHTML = `${bar("Karteikarten")}
+    <div class="box res"><div class="em">${l.length ? "💪" : "🎉"}</div><h2>${l.length ? "Gut gemacht!" : "Alles gewusst!"}</h2>
+    <p class="small">${F.know.length} gewusst, ${l.length} noch lernen.</p>
+    ${l.length ? `<button class="btn main" id="again">Die ${l.length} nochmal üben</button>` : ""}
+    <button class="btn" id="restart">Alle Karten neu starten</button></div>`;
+  wireBack();
+  if (l.length) $("again").onclick = () => flashStart(shuffle(l));
+  $("restart").onclick = () => flashStart();
+}
+
+/* ---------- Gemeinsame Fragen ---------- */
+function askMC(w, d, host, cb){
+  const opts = shuffle([w].concat(distractors(w, d, 3)));
+  host.innerHTML = `<div class="q"><div class="ask">${d === "de" ? "Was heißt das auf Arabic?" : "Was heißt das auf Deutsch?"}</div><div class="big${d==="de"?"":" ar"}${isNum(w)&&d==="de"?" num":""}">${esc(promptOf(w,d))}</div></div>
+    <div class="opts">${opts.map(o => `<button class="opt" data-id="${o.id}">${esc(answerOf(o,d))}</button>`).join("")}</div><div id="fb"></div>`;
+  host.querySelectorAll(".opt").forEach(b => b.onclick = () => {
+    const ok = +b.dataset.id === w.id;
+    host.querySelectorAll(".opt").forEach(x => { x.disabled = true; if (+x.dataset.id === w.id) x.classList.add("ok"); });
+    if (!ok) b.classList.add("bad");
+    cb(ok);
+  });
+}
+// Sprechen: deutsches Wort sehen, laut auf Arabic sagen, aufdecken, selbst bewerten
+function askSpeak(w, host, cb){
+  host.innerHTML = `<div class="q"><div class="ask">Sag es laut auf Arabic</div><div class="big${isNum(w)?" num":""}">${esc(w.de)}</div></div>
+    <button class="btn main" id="rv">Aufdecken</button><div id="fb"></div>`;
+  host.querySelector("#rv").onclick = () => {
+    host.querySelector("#rv").remove();
+    $("fb").innerHTML = `<div class="fb" style="background:var(--card)">${answerBlock(w)}</div>
+      <div class="two" style="margin-top:10px"><button class="btn badb" id="sn">✗ Nicht gewusst</button><button class="btn okb" id="sy">✓ Richtig gesagt</button></div>`;
+    $("sn").onclick = () => cb(false);
+    $("sy").onclick = () => cb(true);
+  };
+}
+// Rückmeldung immer mit Arabic, Lautschrift und Hinweis, auch bei richtiger Antwort
+function feedback(w, ok, onNext){
+  const fb = $("fb");
+  fb.innerHTML = `<div class="fb ${ok?"ok":"bad"}"><div class="h">${ok ? "Richtig!" : "Nicht ganz"}</div>${answerBlock(w)}</div>
+    <button class="btn main" id="nx" style="margin-top:10px">Weiter</button>`;
+  $("nx").onclick = onNext;
+  fb.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+/* ---------- Lernen: Stufe 1 erkennen (Auswahl), Stufe 2 sprechen, dann beherrscht ---------- */
+let L;
+function learnSave(){ setSess({m:"learn", catName: catName(), round: L.round.map(w => w.id), i: L.i, right: L.right}); }
+function learnStart(){
+  const list = pool();
+  if (list.every(w => S.lv[w.id] === 2)) return learnDone(list);
+  const open = list.filter(w => S.lv[w.id] !== 2).sort((a,b) => (S.lv[a.id]||0) - (S.lv[b.id]||0));
+  L = {list, round: open.slice(0,7), i:0, right:0};
+  learnSave(); learnQ();
+}
+function learnQ(){
+  if (L.i >= L.round.length) return learnRound();
+  const w = L.round[L.i], lv = S.lv[w.id] || 0, d = w.g ? "de" : dir();
+  const m = L.list.filter(x => S.lv[x.id] === 2).length;
+  $("app").innerHTML = `${bar("Lernen", m + " / " + L.list.length)}<div class="prog"><i style="width:${m/L.list.length*100}%"></i></div>
+    <div class="small">${lv === 0 ? "Stufe 1 von 2: erkennen" : "Stufe 2 von 2: sprechen"}</div><div id="qa" style="display:flex;flex-direction:column;gap:12px"></div>`;
+  wireBack();
+  const host = $("qa");
+  const next = () => { L.i++; learnSave(); learnQ(); };
+  const setLv = ok => { S.lv[w.id] = ok ? Math.min(2, lv + 1) : 0; if (ok) L.right++; L.i++; learnSave(); L.i--; };
+  if (lv === 0) askMC(w, d, host, ok => { setLv(ok); feedback(w, ok, next); });
+  else askSpeak(w, host, ok => { setLv(ok); next(); });
+}
+function learnRound(){
+  endSess();
+  const m = L.list.filter(x => S.lv[x.id] === 2).length;
+  if (m === L.list.length) return learnDone(L.list);
+  $("app").innerHTML = `${bar("Lernen")}<div class="box res"><div class="em">🔥</div><h2>Runde geschafft</h2><p class="small">${L.right} von ${L.round.length} richtig. Beherrscht: ${m} von ${L.list.length}.</p><div class="prog" style="width:100%"><i style="width:${m/L.list.length*100}%"></i></div><button class="btn main" id="cont">Weiter lernen</button></div>`;
+  wireBack(); $("cont").onclick = learnStart;
+}
+function learnDone(list){
+  endSess();
+  $("app").innerHTML = `${bar("Lernen")}<div class="box res"><div class="em">🏆</div><h2>Alles beherrscht!</h2><p class="small">Du kannst alle ${list.length} Begriffe aus „${catName()}“. Für Wiederholung: Test oder Spiele.</p><button class="btn" id="re">Lernen neu starten</button></div>`;
+  wireBack(); $("re").onclick = () => { list.forEach(w => delete S.lv[w.id]); save(); learnStart(); };
+}
+
+/* ---------- Test: 12 gemischte Fragen (Auswahl und richtig/falsch) ---------- */
+let T;
+function testSave(){ setSess({m:"test", catName: catName(), qs: T.qs.map(q => ({id: q.w.id, type: q.type, d: q.d})), i: T.i, right: T.right, wrong: T.wrong.map(w => w.id)}); }
+function testStart(){
+  const list = shuffle(gamePool()).slice(0, 12);
+  T = {qs: shuffle(list.map((w, i) => ({w, type: i % 2 ? "tf" : "mc", d: dir()}))), i:0, right:0, wrong:[]};
+  testSave(); testQ();
+}
+function testQ(){
+  if (T.i >= T.qs.length) return testEnd();
+  const {w, type, d} = T.qs[T.i];
+  $("app").innerHTML = `${bar("Test", (T.i+1) + " / " + T.qs.length)}<div class="prog"><i style="width:${T.i/T.qs.length*100}%"></i></div><div id="qa" style="display:flex;flex-direction:column;gap:12px"></div>`;
+  wireBack();
+  const host = $("qa"), next = () => testQ();
+  const res = ok => { if (ok) T.right++; else T.wrong.push(w); T.i++; testSave(); feedback(w, ok, next); };
+  if (type === "mc") askMC(w, d, host, res);
+  else {
+    const real = Math.random() < .5, shown = real ? w : distractors(w, d, 1)[0];
+    host.innerHTML = `<div class="q"><div class="ask">Richtig oder falsch?</div><div class="big${d==="de"?"":" ar"}">${esc(promptOf(w,d))}</div><div class="small">bedeutet</div><div class="big${d==="de"?" ar":""}" style="font-size:24px">${esc(answerOf(shown,d))}</div></div>
+      <div class="two"><button class="btn badb" data-a="0">Falsch</button><button class="btn okb" data-a="1">Richtig</button></div><div id="fb"></div>`;
+    host.querySelectorAll("[data-a]").forEach(b => b.onclick = () => { host.querySelectorAll("[data-a]").forEach(x => x.disabled = true); res((b.dataset.a === "1") === real); });
+  }
+}
+function testEnd(){
+  endSess();
+  const n = T.qs.length, p = Math.round(T.right/n*100);
+  $("app").innerHTML = `${bar("Test")}<div class="box res"><div class="em">${p >= 90 ? "🏆" : p >= 60 ? "👍" : "📚"}</div><h2>${p} %</h2><p class="small">${T.right} von ${n} richtig</p>
+    ${T.wrong.length ? `<div style="width:100%;text-align:left">${T.wrong.map(w => `<div class="row"><div class="t">${esc(w.de)}<b>${esc(w.dar)}</b>${w.laut ? `<span class="small">${esc(w.laut)}</span>` : ""}</div></div>`).join("")}</div>` : ""}
+    <button class="btn main" id="re">Neuer Test</button></div>`;
+  wireBack(); $("re").onclick = testStart;
+}
+
+/* ---------- Spiel: Zuordnen ---------- */
+function matchStart(){
+  const ws = pickPairs();
+  const tiles = shuffle(ws.flatMap(w => [{id:w.id, t:w.de}, {id:w.id, t:w.dar}]));
+  let sel = null, left = 6, pen = 0; const t0 = Date.now();
+  $("app").innerHTML = `${bar("Zuordnen")}<div class="timer" id="tm">0,0 s</div><div class="small" style="text-align:center">Tippe zwei Kacheln, die zusammengehören. Fehler kosten 1 Sekunde.</div>
+    <div class="mgrid">${tiles.map((x,i) => `<button class="mt" data-i="${i}">${esc(x.t)}</button>`).join("")}</div>`;
+  wireBack();
+  timers.push(setInterval(() => { const el = $("tm"); if (el) el.textContent = fmtTime(Date.now() - t0 + pen); }, 100));
+  document.querySelectorAll(".mt").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    if (sel === null){ sel = i; b.classList.add("sel"); return; }
+    if (sel === i){ b.classList.remove("sel"); sel = null; return; }
+    const a = document.querySelector(`.mt[data-i="${sel}"]`);
+    if (tiles[sel].id === tiles[i].id){
+      a.classList.remove("sel"); a.classList.add("gone"); b.classList.add("gone"); left--;
+      if (!left){ clearTimers(); const ms = Date.now() - t0 + pen; const rec = !S.best.match || ms < S.best.match; if (rec){ S.best.match = ms; save(); }
+        setTimeout(() => gameEnd("Zuordnen", "⏱️", fmtTime(ms), rec ? "Neue Bestzeit!" : "Bestzeit: " + fmtTime(S.best.match), matchStart), 300); }
+    } else {
+      pen += 1000; a.classList.remove("sel"); [a,b].forEach(x => { x.classList.add("err"); setTimeout(() => x.classList.remove("err"), 350); });
+    }
+    sel = null;
+  });
+}
+
+/* ---------- Spiel: Blitzrunde ---------- */
+function blitzStart(){
+  let score = 0, streak = 0, left = 60, cur;
+  const ws = gamePool();
+  $("app").innerHTML = `${bar("Blitzrunde")}<div class="two" style="align-items:center"><div class="timer" id="tl">60</div><div class="timer" id="sc" style="color:var(--accent)">0</div></div>
+    <div class="small" style="text-align:center">Sekunden · Punkte</div>
+    <div class="q" id="bq"></div>
+    <div class="two"><button class="btn badb" id="bf">✗ Falsch</button><button class="btn okb" id="bt">✓ Richtig</button></div>
+    <div class="small" id="bs" style="text-align:center">&nbsp;</div>`;
+  wireBack();
+  const nextQ = () => {
+    const w = ws[Math.floor(Math.random()*ws.length)], d = dir(), real = Math.random() < .5;
+    cur = {real}; const shown = real ? w : distractors(w, d, 1)[0];
+    $("bq").innerHTML = `<div class="big${d==="de"?"":" ar"}" style="font-size:26px">${esc(promptOf(w,d))}</div><div class="small">bedeutet</div><div class="big${d==="de"?" ar":""}" style="font-size:24px">${esc(answerOf(shown,d))}</div>`;
+  };
+  const ans = yes => {
+    if (!left) return;
+    if (yes === cur.real){ streak++; score += streak >= 5 ? 2 : 1; $("bs").textContent = streak >= 5 ? `🔥 Serie ${streak}: doppelte Punkte` : "Richtig"; }
+    else { streak = 0; $("bs").textContent = "Falsch, Serie weg"; }
+    $("sc").textContent = score; nextQ();
+  };
+  $("bt").onclick = () => ans(true); $("bf").onclick = () => ans(false);
+  nextQ();
+  timers.push(setInterval(() => {
+    left--; const el = $("tl"); if (el) el.textContent = left;
+    if (left <= 0){ clearTimers(); const rec = score > (S.best.blitz || 0); if (rec){ S.best.blitz = score; save(); }
+      gameEnd("Blitzrunde", "⚡", score + " Punkte", rec ? "Neuer Rekord!" : "Rekord: " + S.best.blitz + " Punkte", blitzStart); }
+  }, 1000));
+}
+
+/* ---------- Spiel: Memory ---------- */
+function memStart(){
+  const ws = pickPairs();
+  const tiles = shuffle(ws.flatMap(w => [{id:w.id, t:w.de}, {id:w.id, t:w.dar}]));
+  let open = [], moves = 0, found = 0, lock = false;
+  $("app").innerHTML = `${bar("Memory", "0 Züge")}<div class="small" style="text-align:center">Finde die Paare aus Deutsch und Arabic.</div>
+    <div class="mgrid">${tiles.map((x,i) => `<button class="mt hid" data-i="${i}">${esc(x.t)}</button>`).join("")}</div>`;
+  wireBack();
+  document.querySelectorAll(".mt").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    if (lock || !b.classList.contains("hid")) return;
+    b.classList.remove("hid"); open.push(i);
+    if (open.length < 2) return;
+    moves++; $("right").textContent = moves + " Züge";
+    const [x, y] = open; open = [];
+    const bx = document.querySelector(`.mt[data-i="${x}"]`), by = b;
+    if (tiles[x].id === tiles[y].id){
+      bx.classList.add("match"); by.classList.add("match"); found++;
+      if (found === 6){ const rec = !S.best.mem || moves < S.best.mem; if (rec){ S.best.mem = moves; save(); }
+        setTimeout(() => gameEnd("Memory", "🧠", moves + " Züge", rec ? "Neuer Rekord!" : "Rekord: " + S.best.mem + " Züge", memStart), 500); }
+    } else { lock = true; setTimeout(() => { bx.classList.add("hid"); by.classList.add("hid"); lock = false; }, 900); }
+  });
+}
+
+// 6 Paare ohne doppelte Texte (z. B. „sac“ für Tasche und Rucksack), sonst wären Paare nicht eindeutig
+function pickPairs(){
+  const seen = new Set(), out = [];
+  for (const w of shuffle(gamePool())){
+    const a = norm(w.de), b = norm(w.dar);
+    if (seen.has(a) || seen.has(b)) continue;
+    seen.add(a); seen.add(b); out.push(w);
+    if (out.length === 6) break;
+  }
+  return out;
+}
+function gameEnd(title, em, big, sub, again){
+  $("app").innerHTML = `${bar(title)}<div class="box res"><div class="em">${em}</div><h2>${big}</h2><p class="small">${sub}</p><button class="btn main" id="ag">Nochmal spielen</button><button class="btn" id="hm">Zur Übersicht</button></div>`;
+  wireBack(); $("ag").onclick = () => go(again); $("hm").onclick = () => go(home);
+}
+
+// Beim Öffnen direkt dort weitermachen, wo du aufgehört hast
+if (S.sess) resumeSess(); else home();
+// offline nutzbar: speichert die App nach dem ersten Öffnen auf dem Gerät
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js", {scope:"./"}).catch(()=>{});
+</script>
+</body></html>

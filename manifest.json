@@ -1,0 +1,13 @@
+{
+  "name": "Arabic",
+  "short_name": "Arabic",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F2F3F8",
+  "theme_color": "#F2F3F8",
+  "icons": [
+    {"src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}
