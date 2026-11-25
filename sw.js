@@ -1,6 +1,6 @@
 // Arabic: eigener Cache, räumt nur Caches mit Präfix "arabickurs-" auf
 const PREFIX = "arabickurs-";
-const CACHE = PREFIX + "v4";
+const CACHE = PREFIX + "v5";
 const CORE = ["./", "./index.html", "./manifest.json", "./icon.png"];
 const SCOPE = new URL("./", self.registration.scope).pathname; // z. B. /Arabic/
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
