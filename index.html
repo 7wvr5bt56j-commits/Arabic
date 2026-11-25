@@ -115,8 +115,10 @@ const WORDS = [{"id":1,"de":"ich","dar":"ana","laut":"A-na","ar":"أنا"},{"id"
 const KEY = "arabic-kurs-v2";
 let S = {};
 try { S = JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){}
-S = Object.assign({star:{}, lv:{}, best:{}, front:"de", cat:"all", shuf:false, sess:null}, S);
+S = Object.assign({star:{}, lv:{}, known:{}, best:{}, front:"de", cat:"all", shuf:false, sess:null}, S);
 if (S.onlyStar){ S.cat = "star"; delete S.onlyStar; }
+// Übernahme aus älteren Versionen: in einer laufenden Karteikarten-Runde als gewusst markierte Wörter merken
+if (S.sess && S.sess.m === "fc") (S.sess.know || []).forEach(id => S.known[id] = 1);
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} };
 window.addEventListener("pagehide", save);
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") save(); });
@@ -187,7 +189,7 @@ function home(){
   const ss = S.sess, names = {fc:"Karteikarten", learn:"Lernen", test:"Test"};
   const resume = ss ? `<button class="box" id="resume" style="display:flex;align-items:center;gap:12px;text-align:left;border:2px solid var(--accent)"><span style="font-size:24px">▶</span><span style="flex:1"><b>Weitermachen: ${names[ss.m]}</b><br><span class="small">${ss.catName || ""} · ${ss.m === "learn" ? "Runde läuft" : (ss.i + 1) + " von " + (ss.ids || ss.qs).length}</span></span></button>` : "";
   $("app").innerHTML = `
-    <div><h1>Arabic</h1><div class="small">${catName()}: ${total} Begriffe · ${mastered} beherrscht</div></div>
+    <div><h1>Arabic</h1><div class="small">${catName()}: ${total} Begriffe · ${mastered} beherrscht · ${list.filter(w => S.known[w.id]).length} in Karteikarten gewusst</div></div>
     <div class="prog"><i style="width:${mastered/total*100}%"></i></div>
     ${resume}
     <div class="seg">${CATS.map(([k,n]) => `<button data-c="${k}" class="${S.cat===k?"on":""}">${n}</button>`).join("")}</div>
@@ -230,35 +232,51 @@ function home(){
   $("reset").onclick = () => { if (confirm("Lernfortschritt und Rekorde löschen? Markierungen bleiben.")){ S.lv = {}; S.best = {}; S.sess = null; save(); home(); } };
 }
 /* ---------- Lernstand übertragen (zwischen Homescreen-Apps) ---------- */
+function stateCounts(d){ return {lv: Object.keys(d.lv||{}).length, known: Object.keys(d.known||{}).length, star: Object.keys(d.star||{}).length, sess: d.sess ? 1 : 0}; }
 function exportCode(){
-  const data = {v:1, lv:S.lv, star:S.star, best:S.best};
+  const data = {v:2, lv:S.lv, known:S.known, star:S.star, best:S.best, sess:S.sess};
   const code = "ARABIC1:" + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-  const n = Object.keys(S.lv).length;
-  $("xfer").innerHTML = `<textarea class="inp" id="xc" rows="3" readonly style="font-size:12px">${esc(code)}</textarea><div class="small">${n} Begriffe mit Lernstand im Code.</div>`;
-  const done = () => toast("Code kopiert. Jetzt in der neuen App einfügen.");
+  const c = stateCounts(data), empty = !c.lv && !c.known && !c.star && !c.sess;
+  $("xfer").innerHTML = `<textarea class="inp" id="xc" rows="3" readonly style="font-size:12px">${esc(code)}</textarea>
+    <div class="small">${empty ? "<b style='color:var(--bad)'>Achtung: In dieser App ist kein Lernstand gespeichert. Der Code ist leer.</b>" :
+      `Im Code: ${c.lv} Begriffe aus Lernen, ${c.known} aus Karteikarten, ${c.star} Markierungen${c.sess ? ", eine laufende Runde" : ""}.`}</div>`;
+  const done = () => toast(empty ? "Code kopiert, aber er ist leer" : "Code kopiert. Jetzt in der neuen App einfügen.");
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done, () => { $("xc").select(); toast("Code markiert, bitte kopieren"); });
   else { $("xc").select(); toast("Code markiert, bitte kopieren"); }
 }
 function importForm(){
-  $("xfer").innerHTML = `<textarea class="inp" id="xi" rows="3" placeholder="Code hier einfügen" style="font-size:12px"></textarea><button class="btn main" id="xgo">Übernehmen</button>`;
+  $("xfer").innerHTML = `<textarea class="inp" id="xi" rows="3" placeholder="Code hier einfügen" style="font-size:12px" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea><button class="btn main" id="xgo">Übernehmen</button><div class="small" id="xmsg"></div>`;
   $("xgo").onclick = () => importCode($("xi").value);
-  if (navigator.clipboard && navigator.clipboard.readText) navigator.clipboard.readText().then(t => { if (t && t.trim().startsWith("ARABIC1:")) $("xi").value = t.trim(); }, () => {});
+}
+// Code lesen: findet „ARABIC1:“ auch mitten im Text, ignoriert Leerzeichen und Zeilenumbrüche
+function parseCode(raw){
+  const s = String(raw || ""), i = s.indexOf("ARABIC1:");
+  if (i < 0) throw new Error("Im eingefügten Text steht kein „ARABIC1:“.");
+  let b = s.slice(i + 8).replace(/[^A-Za-z0-9+/=_-]/g, "").replace(/-/g, "+").replace(/_/g, "/");
+  b = b.replace(/=+$/, ""); while (b.length % 4) b += "=";
+  try { return JSON.parse(decodeURIComponent(escape(atob(b)))); }
+  catch(e){ throw new Error("Der Code ist unvollständig. Bitte noch einmal ganz kopieren."); }
 }
 // Zusammenführen: pro Begriff gilt der bessere Stand, nichts geht verloren
-function importCode(code){
-  try {
-    code = String(code).trim();
-    if (!code.startsWith("ARABIC1:")) throw 0;
-    const d = JSON.parse(decodeURIComponent(escape(atob(code.slice(8)))));
-    let n = 0;
-    for (const [id, lv] of Object.entries(d.lv || {})){ if (BYID[id] && (S.lv[id] || 0) < lv){ S.lv[id] = lv; n++; } }
-    Object.keys(d.star || {}).forEach(id => { if (BYID[id]) S.star[id] = true; });
-    const b = d.best || {};
-    if (b.match && (!S.best.match || b.match < S.best.match)) S.best.match = b.match;
-    if (b.mem && (!S.best.mem || b.mem < S.best.mem)) S.best.mem = b.mem;
-    if (b.blitz && b.blitz > (S.best.blitz || 0)) S.best.blitz = b.blitz;
-    save(); toast(n + " Begriffe übernommen"); home();
-  } catch(e){ toast("Das ist kein gültiger Code"); }
+function importCode(raw){
+  const msg = t => { const el = $("xmsg"); if (el) el.textContent = t; toast(t); };
+  let d;
+  try { d = parseCode(raw); } catch(e){ return msg(e.message); }
+  const c = stateCounts(d);
+  if (!c.lv && !c.known && !c.star && !c.sess) return msg("Der Code ist gültig, aber leer: In der App, aus der er stammt, war kein Lernstand gespeichert.");
+  let n = 0;
+  for (const [id, lv] of Object.entries(d.lv || {})){ if (BYID[id] && (S.lv[id] || 0) < lv){ S.lv[id] = lv; n++; } }
+  for (const id of Object.keys(d.known || {})){ if (BYID[id] && !S.known[id]){ S.known[id] = 1; n++; } }
+  Object.keys(d.star || {}).forEach(id => { if (BYID[id]) S.star[id] = true; });
+  const b = d.best || {};
+  if (b.match && (!S.best.match || b.match < S.best.match)) S.best.match = b.match;
+  if (b.mem && (!S.best.mem || b.mem < S.best.mem)) S.best.mem = b.mem;
+  if (b.blitz && b.blitz > (S.best.blitz || 0)) S.best.blitz = b.blitz;
+  if (d.sess && d.sess.m === "fc") (d.sess.know || []).forEach(id => { if (BYID[id] && !S.known[id]){ S.known[id] = 1; n++; } });
+  if (d.sess && !S.sess) S.sess = d.sess;
+  save();
+  toast(`Übernommen: ${n} Begriffe${d.sess ? " und die laufende Runde" : ""}`);
+  home();
 }
 
 function resumeSess(){
@@ -293,7 +311,7 @@ function flash(){
   wireBack();
   $("card").onclick = e => { if (e.target.closest("[data-st]")) return; F.flipped = !F.flipped; $("card").classList.toggle("fl"); };
   document.querySelectorAll("[data-st]").forEach(b => b.onclick = e => { e.stopPropagation(); if (S.star[w.id]) delete S.star[w.id]; else S.star[w.id] = true; save(); document.querySelectorAll("[data-st]").forEach(x => x.classList.toggle("on", !!S.star[w.id])); });
-  const mark = ok => { F.hist.push(ok); (ok ? F.know : F.learn).push(w); F.i++; F.flipped = false; F.d = null; flashSave(); flash(); };
+  const mark = ok => { if (ok) S.known[w.id] = 1; else delete S.known[w.id]; F.hist.push(ok); (ok ? F.know : F.learn).push(w); F.i++; F.flipped = false; F.d = null; flashSave(); flash(); };
   $("yes").onclick = () => mark(true);
   $("no").onclick = () => mark(false);
   $("undo").onclick = () => { if (!F.hist.length) return; const ok = F.hist.pop(); (ok ? F.know : F.learn).pop(); F.i--; F.flipped = false; F.d = null; flashSave(); flash(); };
